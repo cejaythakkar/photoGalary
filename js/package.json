@@ -1,0 +1,18 @@
+{
+  "name": "learningExpress",
+  "version": "1.0.0",
+  "description": "",
+  "main": "curl.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "body-parser": "^1.12.4",
+    "connect-busboy": "0.0.2",
+    "cors": "^2.6.0",
+    "express": "^4.12.4",
+    "hbs": "^3.0.1"
+  }
+}
