@@ -33,6 +33,13 @@ $(function(){
 			},
 			getIndex : function(){
 				return this.index;
+			},
+			getPropertyValue : function(valueType){
+				switch(valueType){
+					case "function" : return "function(){}"
+					case "object" : return "{}"
+					case "string" : return "''"
+				}
 			}
 		}
 	})();
@@ -45,16 +52,19 @@ $(function(){
 				case 'propertyName' : 
 					commonUtils.observerList[index]['propertyName'] = value;
 					break;
-				case 'propertyValue' : break;
+				case 'propertyValue' : 
+					commonUtils.observerList[index]['propertyValue'] = commonUtils.getPropertyValue(value);
+					break;
 			}
 		}
 	};
 
 	$('#privateProperties').on('click','.propertyTypeRadio',function(event){
 		var index = parseInt($(this).siblings('input[type="text"]').attr('index'));
+		var ele = $(this).siblings('input[type="text"]');
 		propertyValuesArray[index]=constructPropertyType($(this).attr('value'));
-		generatePropertyString(index);
-		
+		//generatePropertyString(index);
+		ele.get(0).notify(index,'propertyValue',$(this).val())
 	});
 	$('#className').on('keypress',function(event){
 		className = $(this).val() + String.fromCharCode(event.keyCode);
@@ -64,7 +74,7 @@ $(function(){
 		var index = $(this).attr('index');
 		propertyNamesArray[index] = $(this).val() + String.fromCharCode(event.keyCode);
 		propertyValuesArray[index] = constructPropertyType('string');
-		generatePropertyString(index);
+		//generatePropertyString(index);
 		$(this).get(0).notify(index,'propertyName',$(this).val() + String.fromCharCode(event.keyCode))
 	});
 	/*function getPropertyTemplate(){
