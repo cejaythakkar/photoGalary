@@ -4,50 +4,79 @@ $(function(){
 		propertiesArray = [],
 		propertyNamesArray = [],
 		propertyValuesArray = [],
-		index=0,
-		propertyType='string',
-		propertyTemplate = '<div>'+
-				'<label>Property Name:</label>'+
-				'<input type="text" name="propertyName1" class="property" id="PropertyName1" index="{{index}}">'+
-				'<input type="radio" name="{{index}}" value="function" class="propertyTypeRadio">Function'+
-				'<input type="radio" name="{{index}}" value="string" class="propertyTypeRadio" checked>String'+
-				'<input type="radio" name="{{index}}" value="object" class="propertyTypeRadio">Object'+
-				'<button class="deleteProperty">X</button>'+
-			'</div>';
+		propertyType='string';
+
+	var commonUtils = (function(){
+		return {
+			index : 0,
+			observerList : [],
+			propertyTemplate : '<div>'+
+					'<label>Property Name:</label>'+
+					'<input type="text" name="propertyName1" class="property" id="PropertyName1" index="{{index}}">'+
+					'<input type="radio" name="{{index}}" value="function" class="propertyTypeRadio">Function'+
+					'<input type="radio" name="{{index}}" value="string" class="propertyTypeRadio" checked>String'+
+					'<input type="radio" name="{{index}}" value="object" class="propertyTypeRadio">Object'+
+					'<button class="deleteProperty">X</button>'+
+				'</div>',
+			addPropertyRow : function(){
+				$('#privateProperties').append(this.propertyTemplate.replace(/{{index}}/ig,this.index));
+				this.addProperty();
+				this.index++;
+			},
+			addProperty : function(){
+				this.observerList[this.index] = {propertyName : '',propertyValue : ''};
+			},
+			inherits : function(base , extension){
+				for(var property in base){
+					extension[property] = base[property];
+				}
+			},
+			getIndex : function(){
+				return this.index;
+			}
+		}
+	})();
+
+	var subject = function(){};
+
+	subject.prototype = {
+		notify : function(index,notificationType,value){
+			switch(notificationType){
+				case 'propertyName' : 
+					commonUtils.observerList[index]['propertyName'] = value;
+					break;
+				case 'propertyValue' : break;
+			}
+		}
+	};
+
 	$('#privateProperties').on('click','.propertyTypeRadio',function(event){
 		var index = parseInt($(this).siblings('input[type="text"]').attr('index'));
-		/*propertiesArray[index] = propertiesArray[index].replace(/{{value}}/,
-			constructPropertyType($(this).attr('value')));*/
 		propertyValuesArray[index]=constructPropertyType($(this).attr('value'));
 		generatePropertyString(index);
 		
-	});
-	$('input#save').on('change',function(event){
-
 	});
 	$('#className').on('keypress',function(event){
 		className = $(this).val() + String.fromCharCode(event.keyCode);
 		constructClass();
 	});
-	$('body').on('keypress','.property',function(event){
+	$('#privateProperties').on('keypress','.property',function(event){
 		var index = $(this).attr('index');
-		/*var property = getPropertyTemplate().replace(/{{propertyName}}/,$(this).val() + String.fromCharCode(event.keyCode));
-		propertiesArray[$(this).attr('index')] = property;*/
-		// properties = getPropertyTemplate().replace(/{{\w*}}/,$(this).val() + String.fromCharCode(event.keyCode));
-		//$('#outputArea').text(template.replace(/{{properties}}/,properties));
 		propertyNamesArray[index] = $(this).val() + String.fromCharCode(event.keyCode);
 		propertyValuesArray[index] = constructPropertyType('string');
 		generatePropertyString(index);
-		
+		$(this).get(0).notify(index,'propertyName',$(this).val() + String.fromCharCode(event.keyCode))
 	});
-	function getPropertyTemplate(){
+	/*function getPropertyTemplate(){
 		return "this.{{propertyName}}={{value}}";
-	}
+	}*/
 	$('#addProperty').on('click',function(){
-		$('#privateProperties').append(propertyTemplate.replace(/{{index}}/ig,index));
-		index++;
-
+		var index = commonUtils.getIndex();
+		commonUtils.addPropertyRow();
+		var extension = $('input[index="'+ index +'"]').get(0);
+		commonUtils.inherits(new subject,extension);
 	});
+
 	$('button#submit').on('click',function(event){
 		$.ajax({
 			type:'POST',
