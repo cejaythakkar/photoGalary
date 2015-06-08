@@ -5,14 +5,17 @@ var fs = require('fs'),
 	hbs = require('hbs'),
 	app = express();
 
+// app.use(express.bodyParser());
 app.set('view engine','html');
 app.engine('html',hbs.__express);
 app.use(busboy());
+
 app.use(bodyParser.urlencoded({extended:false}));
 app.get('/',function(request,response){
 	response.render('loginPage');
 });
 app.post('/addImages',function(request,response){
+	console.log(request.files);
 	request.pipe(request.busboy);
 	request.busboy.on('file',function(fieldname,file,filename){
 		console.log('uploading ' + filename);
@@ -22,7 +25,9 @@ app.post('/addImages',function(request,response){
 			console.log('upload finished!!');
 			response.redirect('back');
 		});
+
 	});
+	
 });
 
 app.listen(3300,function(){

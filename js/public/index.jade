@@ -9,4 +9,8 @@ body
 	div#body
 		div#bodyContainer
 			div#galaryStage
+		#form(style="float:right")
+			form(action="http://localhost:3000/upload" , method="post", enctype="multipart/form-data")
+				input(type="file")
+				input(type="submit")
 	include footer
