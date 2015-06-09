@@ -4,25 +4,35 @@ var fs = require('fs'),
 	app = express(),
 	cors = require('cors'),
 	bodyparser = require('body-parser');
+	direcrotyUtil = require('./propertyEditor');
 	
 app.use(bodyparser.urlencoded({extended:false}));
 app.use(cors());
 app.post('/createFile',function(request,response){
 	console.log(request.body);
-	var read = new stream.Readable();
-	var write = new stream.Writable();
+	var read = new stream.Readable(),
+		writeableStream = fs.createWriteStream(request.body.path + '/' +request.body.className + '.js');
 	read._read = function(){
-		read.push(request.body.clas);
+		read.push(request.body['class']);
 		read.push(null);
 	};
-	// write._write = function(chunk,encoding,next){
-	// 	next();
-	// };
-	read.pipe(process.stdout);
+	read.pipe(writeableStream);
 	// response.writeHead(200,{
 	// 	'Content-Type': 'text/plain'
 	// });
 	console.log('post');
 	response.end('hello');
 });
+
+app.get('/propertyFiles',function(request,response){
+	if(request.query.file){
+		response.end(request.query.file);
+		return;
+	}
+	console.log(request.param);
+	direcrotyUtil.getPropertyFiles();
+	response.writeHead(200,{'Content-Type':'application/json'});
+	response.end(JSON.stringify({files : direcrotyUtil.files}));
+});
+
 app.listen(3000);

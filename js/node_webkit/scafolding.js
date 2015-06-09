@@ -1,15 +1,11 @@
 $(function(){
-	var template = "function {{className}}(){\n{{properties}}\n}",
-		className ='',
-		propertiesArray = [],
-		propertyNamesArray = [],
-		propertyValuesArray = [],
-		propertyType='string';
 
 	var commonUtils = (function(){
 		return {
 			index : 0,
+			className:'',
 			observerList : [],
+			template : "function {{className}}(){\n{{properties}}\n}",
 			propertyTemplate : '<div>'+
 					'<label>Property Name:</label>'+
 					'<input type="text" name="propertyName1" class="property" id="PropertyName1" index="{{index}}">'+
@@ -24,7 +20,7 @@ $(function(){
 				this.index++;
 			},
 			addProperty : function(){
-				this.observerList[this.index] = {propertyName : '',propertyValue : ''};
+				this.observerList[this.index] = {propertyName : '',propertyValue : '""'};
 			},
 			inherits : function(base , extension){
 				for(var property in base){
@@ -40,9 +36,39 @@ $(function(){
 					case "object" : return "{}"
 					case "string" : return "''"
 				}
+			},
+			setClassName : function(className){
+				this.className = className;
+			},
+			constructClass : function(){
+				var propertyArray = [],property;
+				for(var i = 0;i < this.observerList.length;i++){
+					property = this.observerList[i];
+					propertyArray[i] = "this." + property['propertyName'] + ' = ' + property['propertyValue'];
+				}
+				var newTemplate = this.template.replace(/{{className}}/,this.className).replace(/{{properties}}/,propertyArray.join(','));
+				$('#outputArea').text(newTemplate);
+			},
+			loadPropertyFiles: function(){
+				$.ajax({
+					type : 'GET',
+					url : 'http://localhost:3000/propertyFiles/',
+					crossDomain:true,
+					dataType : 'json',
+					success : function(data){
+						for(var i = 0; i < data.files.length ; i++){
+							$('#propertyFileList > ul').append('<li><a><span>'+ data.files[i] +'</span></a></li>');
+						}
+					},
+					error : function(){
+						console.log('error')
+					}
+				});
 			}
 		}
 	})();
+
+	commonUtils.loadPropertyFiles();
 
 	var subject = function(){};
 
@@ -62,24 +88,38 @@ $(function(){
 	$('#privateProperties').on('click','.propertyTypeRadio',function(event){
 		var index = parseInt($(this).siblings('input[type="text"]').attr('index'));
 		var ele = $(this).siblings('input[type="text"]');
-		propertyValuesArray[index]=constructPropertyType($(this).attr('value'));
-		//generatePropertyString(index);
-		ele.get(0).notify(index,'propertyValue',$(this).val())
+		ele.get(0).notify(index,'propertyValue',$(this).val());
+		commonUtils.constructClass();
 	});
+
+	$('#propertyFileListUl').on('click','li',function(){
+		var self = this;
+		$.ajax({
+			type : 'GET',
+			url : 'http://localhost:3000/propertyFiles?file=' + $(self).find('span').text(),
+			dataType : 'text',
+			data : '',
+			crossDomain : true,
+			success : function(data){
+				console.log(data);
+			},
+			error : function(){
+				console.log('error');
+			}
+		});
+	});
+
 	$('#className').on('keypress',function(event){
-		className = $(this).val() + String.fromCharCode(event.keyCode);
-		constructClass();
+		commonUtils.setClassName($(this).val() + String.fromCharCode(event.keyCode));
+		commonUtils.constructClass();
 	});
+
 	$('#privateProperties').on('keypress','.property',function(event){
 		var index = $(this).attr('index');
-		propertyNamesArray[index] = $(this).val() + String.fromCharCode(event.keyCode);
-		propertyValuesArray[index] = constructPropertyType('string');
-		//generatePropertyString(index);
-		$(this).get(0).notify(index,'propertyName',$(this).val() + String.fromCharCode(event.keyCode))
+		$(this).get(0).notify(index,'propertyName',$(this).val() + String.fromCharCode(event.keyCode));
+		commonUtils.constructClass();
 	});
-	/*function getPropertyTemplate(){
-		return "this.{{propertyName}}={{value}}";
-	}*/
+
 	$('#addProperty').on('click',function(){
 		var index = commonUtils.getIndex();
 		commonUtils.addPropertyRow();
@@ -93,7 +133,7 @@ $(function(){
 			url:'http://localhost:3000/createFile/',
 			crossDomain:true,
 			dataType:'text',
-			data:{'clas':$(outputArea).val()},
+			data:{'class':$(outputArea).val(),'className' : commonUtils.className,'path' : $('#save').val()},
 			success:function(){
 				console.log('success');
 			},
@@ -102,26 +142,4 @@ $(function(){
 			}
 		});
 	});
-	function constructPropertyType(propertyType){
-		switch(propertyType){
-			case 'function': return 'function(){}'
-			case 'object' : return '{}'
-			default : return '""'
-		}
-	}
-	function generatePropertyString(index){
-		var property = getPropertyTemplate().replace(/{{propertyName}}/,
-			propertyNamesArray[index]).replace(/{{value}}/,propertyValuesArray[index]);
-		propertiesArray[index] = property;
-		constructClass();
-	}
-	function constructClass(){
-		var properties = (propertiesArray.length>1)? propertiesArray.join(',') : propertiesArray.toString();
-		properties = properties.replace(',',',\n');
-		
-		$('#outputArea').text(
-			template.replace(/{{className}}/,className)
-			.replace(/{{properties}}/,properties)
-			);	
-	}
 });
