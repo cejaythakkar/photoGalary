@@ -97,7 +97,7 @@ $(function(){
 		$.ajax({
 			type : 'GET',
 			url : 'http://localhost:3000/propertyFiles?file=' + $(self).find('span').text(),
-			dataType : 'text',
+			dataType : 'json',
 			data : '',
 			crossDomain : true,
 			success : function(data){
